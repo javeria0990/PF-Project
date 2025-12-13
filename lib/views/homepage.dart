@@ -166,6 +166,14 @@ class _HomepageState extends State<Homepage> {
                   child: actionCard(Icons.remove_sharp, "Withraw", Colors.red),
                 ),
                 InkWell(
+                  onTap: () {},
+                  child: actionCard(
+                    Icons.receipt_long,
+                    "Bill Payment",
+                    Color(0xFF546E7A),
+                  ),
+                ),
+                InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
@@ -177,7 +185,7 @@ class _HomepageState extends State<Homepage> {
                   child: actionCard(
                     Icons.history,
                     "Transactions",
-                    Color.fromARGB(255, 16, 41, 123),
+                    Color.fromARGB(255, 2, 39, 162),
                   ),
                 ),
               ],

@@ -24,6 +24,7 @@ class _HomepageState extends State<Homepage> {
   TextEditingController swapAmountController = TextEditingController();
   TextEditingController receiverNumber = TextEditingController();
   TextEditingController receiverName = TextEditingController();
+  TextEditingController billConsumerNo = TextEditingController();
 
   FocusNode buttonFocus = FocusNode();
   FocusNode tidFocus = FocusNode();
@@ -34,6 +35,7 @@ class _HomepageState extends State<Homepage> {
   final _key = GlobalKey<FormState>();
   final _key2 = GlobalKey<FormState>();
   final _key3 = GlobalKey<FormState>();
+  final _key4 = GlobalKey<FormState>();
 
   final List<String> paymentMethods = [
     "Binance",
@@ -54,9 +56,19 @@ class _HomepageState extends State<Homepage> {
 
   final List<String> swapCurrency = ["BTC", "USD"];
 
+  final Map<String, List<String>> bills = {
+    "Electricity": ["MEPCO", "LESCO", "K-ELECTRIC"],
+    "Water": ["LWASA", "BWASA", "CDA"],
+    "Gas": ["SSGC", "SNGPL"],
+    "Internet": ["OPTIX", "SB-LINK", "NAYATEL"],
+    "1Bill Payments": ["1Bill INVOICES", "1BILL TOP UP"],
+  };
+
   String? selectedMethod;
   String? selectedCurrency;
   String? selectedReceiverMethod;
+  String? selectedBill;
+  String? selectedSP;
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +178,9 @@ class _HomepageState extends State<Homepage> {
                   child: actionCard(Icons.remove_sharp, "Withraw", Colors.red),
                 ),
                 InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    billPayments();
+                  },
                   child: actionCard(
                     Icons.receipt_long,
                     "Bill Payment",
@@ -236,6 +250,181 @@ class _HomepageState extends State<Homepage> {
           ],
         ),
       ),
+    );
+  }
+
+  void billPayments() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Center(
+              child: Text(
+                "Bill Payment",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            content: Form(
+              key: _key4,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 0,
+                      ),
+                      label: Text('--Select Bill Payment--'),
+                      labelStyle: TextStyle(fontSize: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1, color: Colors.red),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: Color(0xff57C785),
+                        ),
+                      ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                    ),
+                    value: selectedBill,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a Bill to pay!';
+                      }
+                      return null;
+                    },
+                    items: bills.keys.map((bill) {
+                      return DropdownMenuItem<String>(
+                        value: bill,
+                        child: Text(
+                          bill,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedBill = value;
+                        selectedSP = null;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 0,
+                      ),
+                      label: Text('--Select Service Provider--'),
+                      labelStyle: TextStyle(fontSize: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1, color: Colors.red),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: Color(0xff57C785),
+                        ),
+                      ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(width: 1),
+                      ),
+                    ),
+                    value: selectedSP,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a Service Provider!';
+                      }
+                      return null;
+                    },
+                    items: selectedBill == null
+                        ? []
+                        : bills[selectedBill]!.map((bill) {
+                            return DropdownMenuItem<String>(
+                              value: bill,
+                              child: Text(
+                                bill,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                    onChanged: selectedBill == null
+                        ? null
+                        : (String? value) {
+                            setState(() {
+                              selectedSP = value;
+                            });
+                          },
+                  ),
+                  SizedBox(height: 10),
+                  form.signInTf(
+                    controller: billConsumerNo,
+                    icon: Icon(Icons.numbers),
+                    hint: "Enter Consumer ID",
+                    validator: (p0) {
+                      if (p0 == null || p0.isEmpty) {
+                        return "Consumer ID is required!";
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  form.button(
+                    text: Text(
+                      "Pay Bill",
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    onPressed: () {
+                      if (!_key4.currentState!.validate()) {
+                        return;
+                      }
+                      Navigator.pop(context);
+                      Utils().flutterToast("Bill Paid Successfully!", context);
+                      billConsumerNo.clear();
+                      selectedBill = null;
+                      selectedSP = null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -361,7 +550,7 @@ class _HomepageState extends State<Homepage> {
                     Utils().flutterToast("Transaction Successful!", context);
                     receiverName.clear();
                     receiverNumber.clear();
-                    selectedReceiverMethod == null;
+                    selectedReceiverMethod = null;
                   },
                 ),
               ],
@@ -486,7 +675,7 @@ class _HomepageState extends State<Homepage> {
                       context,
                     );
                     swapAmountController.clear();
-                    selectedCurrency == null;
+                    selectedCurrency = null;
                   },
                 ),
               ],
@@ -610,7 +799,7 @@ class _HomepageState extends State<Homepage> {
                     );
                     moneyController.clear();
                     tidController.clear();
-                    selectedMethod == null;
+                    selectedMethod = null;
                   },
                 ),
               ],

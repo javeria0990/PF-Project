@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:pf_project/views/homepage.dart';
 import 'package:pf_project/views/signin_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -11,19 +14,9 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  void navigate() async {
-    await Future.delayed(Duration(seconds: 6));
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => SignInScreen()),
-    );
-  }
-
   @override
   void initState() {
-    navigate();
+    check_user();
     super.initState();
   }
 
@@ -108,5 +101,52 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> check_user() async {
+    await Future.delayed(Duration(seconds: 2));
+    try {
+      final result = await Process.run(
+        "session_check.exe",
+        [],
+        workingDirectory: Directory.current.path,
+      );
+      final int decide = result.exitCode;
+      switch (decide) {
+        case 0:
+          {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => Homepage()),
+            );
+          }
+          break;
+        case 1:
+          {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+            );
+          }
+          break;
+        default:
+          {
+            debugPrint(
+              "Unexpected exit code: $decide. Navigating to SignInScreen.",
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+            );
+          }
+      }
+    } catch (e) {
+      debugPrint("Error checking user session: $e");
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SignInScreen()),
+      );
+    }
   }
 }

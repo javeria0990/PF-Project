@@ -32,6 +32,7 @@ class _SignUpScreen extends State<SignUpScreen> {
   bool reobsecure = true;
 
   String? message;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -229,16 +230,22 @@ class _SignUpScreen extends State<SignUpScreen> {
                                   "Sign Up",
                                   style: TextStyle(color: Colors.black),
                                 ),
-                                onPressed: () {
+                                loading: isLoading,
+                                onPressed: () async {
                                   if (!_formKey.currentState!.validate()) {
                                     return;
                                   }
-                                  signup(
+                                  setState(() {
+                                    isLoading = true;
+                                  });
+                                  await Future.delayed(Duration(seconds: 3));
+                                  await signup(
                                     nameContoller.text,
                                     emailController.text.trim(),
                                     passwordController.text,
                                     confirmPasswordController.text,
                                   );
+                                  isLoading = false;
                                 },
                               ),
                             ),

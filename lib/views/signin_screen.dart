@@ -27,6 +27,7 @@ class _SignInScreen extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   bool obsecure = true;
   String? message;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -164,14 +165,20 @@ class _SignInScreen extends State<SignInScreen> {
                                 "Sign In",
                                 style: TextStyle(color: Colors.black),
                               ),
-                              onPressed: () {
+                              loading: isLoading,
+                              onPressed: () async {
                                 if (!_formKey.currentState!.validate()) {
                                   return;
                                 }
-                                signin(
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                await Future.delayed(Duration(seconds: 3));
+                                await signin(
                                   emailController.text.trim(),
                                   passwordController.text.trim(),
                                 );
+                                isLoading = false;
                               },
                             ),
                           ),

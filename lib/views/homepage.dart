@@ -72,6 +72,16 @@ class _HomepageState extends State<Homepage> {
   String? selectedBill;
   String? selectedSP;
 
+  //user details
+  String? userName, email;
+  int? userID;
+  bool isLoading = false;
+  @override
+  void initState() {
+    currentUser();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +151,7 @@ class _HomepageState extends State<Homepage> {
                         style: TextStyle(fontSize: 14),
                       ),
                       SelectableText(
-                        "UID:Px0012",
+                        "UID:Px$userID",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -842,7 +852,7 @@ class _HomepageState extends State<Homepage> {
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   subtitle: Text(
-                    'Mr.Aftab',
+                    userName ?? "Loading",
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -853,7 +863,7 @@ class _HomepageState extends State<Homepage> {
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   subtitle: Text(
-                    'f2025-0961@bnu.edu.pk',
+                    email ?? "Loading",
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -921,19 +931,24 @@ class _HomepageState extends State<Homepage> {
           ListTile(
             leading: Icon(Icons.logout, color: Colors.red),
             title: Text(
-              'Logout',
+              isLoading ? 'Logging out....' : 'Logout',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.deepPurpleAccent,
               ),
             ),
-            onTap: () {
+            onTap: () async {
               Provider.of<ThemeViewmodel>(
                 context,
                 listen: false,
               ).setLightMode();
-              logout();
+              setState(() {
+                isLoading = true;
+              });
+              await Future.delayed(Duration(seconds: 3));
+              await logout();
+              isLoading = false;
             },
           ),
         ],
@@ -1046,6 +1061,83 @@ class _HomepageState extends State<Homepage> {
       }
     } catch (e) {
       debugPrint("Error in logout :$e");
+    }
+  }
+
+  Future<void> currentUser() async {
+    try {
+      final result = await Process.run(
+        "get_uid.exe",
+        [],
+        workingDirectory: Directory.current.path,
+      );
+      int uid = result.exitCode;
+      switch (uid) {
+        case -1:
+          {
+            debugPrint("file opening error!");
+            Utils().flutterToast("Error in fetching user details!", context);
+          }
+          break;
+        case -2:
+          {
+            debugPrint("Empty session file");
+          }
+          break;
+        case -3:
+          {
+            debugPrint("invalid format or currupted file");
+          }
+          break;
+        default:
+          {
+            setState(() {
+              userID = uid;
+            });
+            final details = await Process.run("get_user_info.exe", [
+              userID.toString(),
+            ], workingDirectory: Directory.current.path);
+            int decide = details.exitCode;
+            switch (decide) {
+              case -1:
+                {
+                  Utils().flutterToast(
+                    "Error in fetching user details!",
+                    context,
+                  );
+                  debugPrint("file opening error!");
+                }
+                break;
+              case 5:
+                {
+                  debugPrint(
+                    "unexpected error in fetching details from users file!",
+                  );
+                  Utils().flutterToast(
+                    "Error in fetching user details!",
+                    context,
+                  );
+                }
+                break;
+              default:
+                {
+                  debugPrint("unexpected error!");
+                }
+                break;
+            }
+            final output = details.stdout.toString().trim();
+            final line = output.split('\n');
+            if (output.isNotEmpty) {
+              setState(() {
+                userName = line[0];
+                email = line[1];
+              });
+            }
+          }
+          break;
+      }
+    } catch (e) {
+      debugPrint("error in current user!");
     }
   }
 }

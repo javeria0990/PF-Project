@@ -6,12 +6,18 @@ using namespace std;
 
 int main(int argument, char *arg[])
 {
+    double balanceToAdd = stod(arg[3]);
     if (argument == 4)
     {
+        if (balanceToAdd > 100000000)
+        {
+            return -9; // out of limit
+        }
+
         bool pkrBalanceUpdate = false;
         int userID = stoi(arg[1]);
         int balanceType = stoi(arg[2]);
-        double balanceToAdd = stod(arg[3]);
+
         if (balanceType == 1)
         {
             pkrBalanceUpdate = true;

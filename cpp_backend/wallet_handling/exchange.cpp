@@ -5,6 +5,8 @@
 #include <iomanip>
 using namespace std;
 
+void gasFeeDeduction(bool type, double &totalbalance, double exAmount);
+
 int main(int arguments, char *arg[])
 {
     if (arguments == 4)
@@ -28,7 +30,7 @@ int main(int arguments, char *arg[])
             {
                 linesV.push_back(line);
             }
-
+            
             for (string &x : linesV)
             {
                 int uid;
@@ -42,6 +44,7 @@ int main(int arguments, char *arg[])
                     {
                         if (toBeExchanged < totalPkrBalance)
                         {
+                            gasFeeDeduction(true, totalPkrBalance, toBeExchanged);
                             totalPkrBalance = totalPkrBalance - toBeExchanged;
                             exchangedAmount = toBeExchanged / 280.0;
                             ostringstream oss;
@@ -56,6 +59,7 @@ int main(int arguments, char *arg[])
                     }
                     else if (toBeExchanged < totalUsdBalance)
                     {
+                        gasFeeDeduction(false, totalUsdBalance, toBeExchanged);
                         totalUsdBalance = totalUsdBalance - toBeExchanged;
                         exchangedAmount = toBeExchanged * 280.0;
                         ostringstream oss;
@@ -92,4 +96,62 @@ int main(int arguments, char *arg[])
     }
 
     return 0;
+}
+
+void gasFeeDeduction(bool type, double &totalbalance, double exAmount)
+{
+    if (type)
+    {
+        if (exAmount < 5000)
+        {
+            totalbalance = totalbalance - 50;
+        }
+        else if (exAmount < 10000)
+        {
+            totalbalance = totalbalance - 100;
+        }
+        else if (exAmount < 100000)
+        {
+            totalbalance = totalbalance - 1000;
+        }
+        else if (exAmount < 1000000)
+        {
+            totalbalance = totalbalance - 5000;
+        }
+        else if (exAmount < 10000000)
+        {
+            totalbalance = totalbalance - 10000;
+        }
+        else if (exAmount < 100000000)
+        {
+            totalbalance = totalbalance - 20000;
+        }
+    }
+    else
+    {
+        if (exAmount < 50)
+        {
+            totalbalance = totalbalance - 3;
+        }
+        else if (exAmount < 100)
+        {
+            totalbalance = totalbalance - 5;
+        }
+        else if (exAmount < 100000)
+        {
+            totalbalance = totalbalance - 100;
+        }
+        else if (exAmount < 1000000)
+        {
+            totalbalance = totalbalance - 500;
+        }
+        else if (exAmount < 10000000)
+        {
+            totalbalance = totalbalance - 1000;
+        }
+        else if (exAmount < 100000000)
+        {
+            totalbalance = totalbalance - 2000;
+        }
+    }
 }

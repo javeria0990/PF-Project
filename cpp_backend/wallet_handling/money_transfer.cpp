@@ -5,7 +5,7 @@
 #include <iomanip>
 using namespace std;
 
-void transactionFee(bool type, double &totalbalance, double exAmount);
+void transactionFee(bool type, double &totalbalance, double toSendAmount);
 
 int main(int arguments, char *arg[])
 {
@@ -101,38 +101,11 @@ void transactionFee(bool type, double &totalbalance, double amountToTransfer)
     {
         if (amountToTransfer < 5000)
         {
-            totalbalance = totalbalance - 50;
+            totalbalance = totalbalance - 0;
         }
         else if (amountToTransfer < 10000)
         {
-            totalbalance = totalbalance - 100;
-        }
-        else if (amountToTransfer < 100000)
-        {
-            totalbalance = totalbalance - 1000;
-        }
-        else if (amountToTransfer < 1000000)
-        {
-            totalbalance = totalbalance - 5000;
-        }
-        else if (amountToTransfer < 10000000)
-        {
-            totalbalance = totalbalance - 10000;
-        }
-        else if (amountToTransfer < 100000000)
-        {
-            totalbalance = totalbalance - 20000;
-        }
-    }
-    else
-    {
-        if (amountToTransfer < 50)
-        {
-            totalbalance = totalbalance - 3;
-        }
-        else if (amountToTransfer < 100)
-        {
-            totalbalance = totalbalance - 5;
+            totalbalance = totalbalance - 10;
         }
         else if (amountToTransfer < 100000)
         {
@@ -149,6 +122,33 @@ void transactionFee(bool type, double &totalbalance, double amountToTransfer)
         else if (amountToTransfer < 100000000)
         {
             totalbalance = totalbalance - 2000;
+        }
+    }
+    else
+    {
+        if (amountToTransfer < 50)
+        {
+            totalbalance = totalbalance - 0;
+        }
+        else if (amountToTransfer < 100)
+        {
+            totalbalance = totalbalance - 3;
+        }
+        else if (amountToTransfer < 100000)
+        {
+            totalbalance = totalbalance - 10;
+        }
+        else if (amountToTransfer < 1000000)
+        {
+            totalbalance = totalbalance - 50;
+        }
+        else if (amountToTransfer < 10000000)
+        {
+            totalbalance = totalbalance - 100;
+        }
+        else if (amountToTransfer < 100000000)
+        {
+            totalbalance = totalbalance - 200;
         }
     }
 }

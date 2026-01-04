@@ -34,6 +34,7 @@ class _HomepageState extends State<Homepage> {
   FocusNode tidFocus = FocusNode();
   FocusNode receiverNameFocus = FocusNode();
   FocusNode receiverNumberFocus = FocusNode();
+  FocusNode amountToSendFocus = FocusNode();
   FocusNode withrawButtonFocus = FocusNode();
   FocusNode moneyFocus = FocusNode();
 
@@ -60,7 +61,7 @@ class _HomepageState extends State<Homepage> {
   ];
 
   final List<String> currency = ["PKR", "USD"];
-  final List<String> swapCurrency = ["USD", "PKR"];
+  final List<String> swapCurrency = ["PKR", "USD"];
 
   final Map<String, List<String>> bills = {
     "Electricity": ["MEPCO", "LESCO", "K-ELECTRIC"],
@@ -76,6 +77,7 @@ class _HomepageState extends State<Homepage> {
   String? selectedBill;
   String? selectedSP;
   String? selectedCurrencyToAdd;
+  String? selectedCurrencyToSend;
 
   //user details
   String? userName, email;
@@ -87,6 +89,7 @@ class _HomepageState extends State<Homepage> {
   double remainingBalance = 0;
   int perUSDpkr = 280;
   double perPKRusd = 0.0036;
+  double transferFee = 0;
 
   @override
   void initState() {
@@ -503,6 +506,64 @@ class _HomepageState extends State<Homepage> {
                       horizontal: 14,
                       vertical: 0,
                     ),
+                    label: Text('--Select Currency--'),
+                    labelStyle: TextStyle(fontSize: 14),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(width: 1),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(width: 1, color: Colors.red),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Color(0xff57C785),
+                      ),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(width: 1),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(width: 1),
+                    ),
+                  ),
+                  value: selectedCurrencyToSend,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select any currency!';
+                    }
+                    return null;
+                  },
+                  items: swapCurrency.map((currency) {
+                    return DropdownMenuItem(
+                      value: currency,
+                      child: Text(
+                        currency,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCurrencyToSend = value;
+                    });
+                  },
+                ),
+                SizedBox(height: 10),
+                DropdownButtonFormField(
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 0,
+                    ),
                     label: Text('--Select Payment Method--'),
                     labelStyle: TextStyle(fontSize: 14),
                     enabledBorder: OutlineInputBorder(
@@ -598,7 +659,7 @@ class _HomepageState extends State<Homepage> {
                 ),
                 SizedBox(height: 10),
                 form.signInTf(
-                  focus: receiverNameFocus,
+                  focus: amountToSendFocus,
                   taction: TextInputAction.next,
                   onsubmitted: (p0) {
                     FocusScope.of(context).requestFocus(withrawButtonFocus);
@@ -612,7 +673,7 @@ class _HomepageState extends State<Homepage> {
                     }
                     double maxLimit = double.tryParse(p0) ?? 0;
                     if (maxLimit > 100000000) {
-                      return "Max allowed limit is 100000000${selectedMethod == "USD" ? "\$" : "PKR"}";
+                      return "Max allowed limit is 100000000${selectedMethod == "PKR" ? "PKR" : "\$"}";
                     }
                     return null;
                   },
@@ -625,15 +686,194 @@ class _HomepageState extends State<Homepage> {
                     if (!_key3.currentState!.validate()) {
                       return;
                     }
-                    Navigator.pop(context);
-                    Utils().flutterToast("Transaction Successful!", context);
-                    receiverName.clear();
-                    receiverNumber.clear();
-                    selectedReceiverMethod = null;
+                    if ((selectedCurrencyToSend == "USD" &&
+                            selectedReceiverMethod != "Binance") &&
+                        (selectedCurrencyToSend == "USD" &&
+                            selectedReceiverMethod != "Paynix")) {
+                      Navigator.pop(context);
+                      Utils().flutterToast(
+                        "USD Transaction can't be done except Binance Method!",
+                        context,
+                      );
+                    } else if ((selectedCurrencyToSend == "PKR" &&
+                        selectedReceiverMethod == "Binance")) {
+                      Navigator.pop(context);
+                      Utils().flutterToast(
+                        "PKR Transaction can't be done through Binance!",
+                        context,
+                      );
+                    } else {
+                      double totalB = 0;
+                      double amount = double.tryParse(amountToSend.text) ?? 0;
+                      if (selectedCurrencyToSend == "PKR") {
+                        totalB = totalPkrBalance;
+                      } else {
+                        totalB = totalUsdBalance;
+                      }
+                      transferFeeDeduction();
+                      transferStats(
+                        selectedCurrencyToSend.toString(),
+                        totalB,
+                        amount,
+                      );
+                      Navigator.pop(context);
+                      transferConfirmation();
+                    }
                   },
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  double transferFeeDeduction() {
+    double amount = double.tryParse(amountToSend.text) ?? 0;
+    if (selectedExchangeCurrency == "PKR") {
+      if (amount < 5000) {
+        transferFee = 0;
+      } else if (amount < 10000) {
+        transferFee = 10;
+      } else if (amount < 100000) {
+        transferFee = 100;
+      } else if (amount < 1000000) {
+        transferFee = 500;
+      } else if (amount < 10000000) {
+        transferFee = 1000;
+      } else if (amount < 100000000) {
+        transferFee = 2000;
+      }
+    } else {
+      if (amount < 50) {
+        transferFee = 0;
+      } else if (amount < 100) {
+        transferFee = 3;
+      } else if (amount < 100000) {
+        transferFee = 10;
+      } else if (amount < 1000000) {
+        transferFee = 50;
+      } else if (amount < 10000000) {
+        transferFee = 100;
+      } else if (amount < 100000000) {
+        transferFee = 200;
+      }
+    }
+    setState(() {
+      transferFee;
+    });
+    return transferFee;
+  }
+
+  void transferStats(
+    String balanceType,
+    double totalBalance,
+    double amountToSend,
+  ) {
+    if (balanceType == "PKR") {
+      remainingBalance = totalBalance - (amountToSend + transferFee);
+    } else {
+      remainingBalance = totalBalance - (amountToSend + transferFee);
+    }
+    setState(() {
+      remainingBalance;
+      exchangedAmount;
+    });
+  }
+
+  void transferConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Center(
+            child: Text("Stats", style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [Text("Receiver Name:"), Text(receiverName.text)],
+              ),
+              SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Receiver Number/UID:"),
+                  Text(receiverNumber.text),
+                ],
+              ),
+              SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [Text("Transfer fee:"), Text("$transferFee")],
+              ),
+              SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Amount to transfer:"),
+                  Text(amountToSend.text),
+                ],
+              ),
+              SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Remaining Balance:${selectedCurrencyToSend == "PKR" ? "PKR" : "USD"}",
+                  ),
+                  Text("$remainingBalance"),
+                ],
+              ),
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("Cancel", style: TextStyle(color: Colors.blue)),
+                  ),
+                  form.button(
+                    text: Text(
+                      "Confirm",
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      Utils().flutterToast(
+                        "Amount Sent Successfully!",
+                        context,
+                      );
+                      Future.delayed(Duration(seconds: 1));
+                      int balType = 0;
+                      if (selectedCurrencyToSend == "PKR") {
+                        balType = 1;
+                      } else if (selectedCurrencyToSend == "USD") {
+                        balType = 2;
+                      }
+                      await transferMoney(
+                        userID.toString(),
+                        balType.toString(),
+                        amountToSend.text,
+                      );
+                      await currentUser();
+                      setState(() {
+                        selectedReceiverMethod = null;
+                        amountToSend.clear();
+                        receiverName.clear();
+                        receiverNumber.clear();
+                        selectedCurrencyToSend = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
@@ -743,6 +983,7 @@ class _HomepageState extends State<Homepage> {
                     } else {
                       totalB = totalUsdBalance;
                     }
+
                     gasFeeDeduction();
                     stats(selectedExchangeCurrency.toString(), totalB, amount);
                     Navigator.pop(context);
@@ -1074,7 +1315,9 @@ class _HomepageState extends State<Homepage> {
                       return;
                     }
                     if ((selectedCurrencyToAdd == "USD" &&
-                        selectedMethod != "Binance")) {
+                            selectedMethod != "Binance") &&
+                        (selectedCurrencyToAdd == "USD" &&
+                            selectedMethod != "Paynix")) {
                       Navigator.pop(context);
                       Utils().flutterToast(
                         "USD Transaction can't be done except Binance Method!",
@@ -1547,6 +1790,52 @@ class _HomepageState extends State<Homepage> {
       }
     } catch (e) {
       debugPrint("Error in exchang money function $e");
+    }
+  }
+
+  Future<void> transferMoney(
+    String uid,
+    String amountType,
+    String amount,
+  ) async {
+    try {
+      final resultx = await Process.run("money_transfer.exe", [
+        uid,
+        amountType,
+        amount,
+      ], workingDirectory: Directory.current.path);
+      int decide = resultx.exitCode;
+      debugPrint("transfer decide code: $decide");
+      switch (decide) {
+        case 0:
+          {
+            debugPrint("transferred money sucessfully!");
+            await Future.delayed(Duration(seconds: 1));
+            await currentUser();
+          }
+          break;
+        case -7:
+          {
+            if (!mounted) {
+              return;
+            }
+            Utils().flutterToast(
+              "Insufficient Balance for this action!",
+              context,
+            );
+          }
+          break;
+        case -1:
+          {
+            debugPrint("File opening error in transfer funtion!");
+          }
+        default:
+          {
+            debugPrint("Error in transfer money function cpp");
+          }
+      }
+    } catch (e) {
+      debugPrint("Error in transfer money function $e");
     }
   }
 }

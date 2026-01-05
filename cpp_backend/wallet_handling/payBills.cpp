@@ -1,144 +1,73 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
-#include <string>
+#include <sstream>
 #include <iomanip>
-
 using namespace std;
 
-struct billStruct
+int main(int arguments, char *arg[])
 {
-    string id;
-    string type;
-    double billAmount;
-    string service_provider;
-};
-
-double account_balance = 15000.00;
-
-int CategoriesOf_Bill();
-void ServiceProviders(int Bills_category);
-double billDetails();
-bool validateFunds(double amount);
-void updateBalance(double amount);
-void payBill();
-void TransactionResult(bool success);
-
-int main()
-{
-    int Bills_category, providers;
-    billStruct current_transaction;
-
-    cout << "    WELCOME TO THE BILL PAYMENT SYSTEM    " << endl;
-    cout << "Current Balance: " << fixed << setprecision(2) << account_balance << " PKR" << endl;
-
-    int choice = CategoriesOf_Bill();
-    ServiceProviders(choice);
-
-    return 0;
-}
-
-int CategoriesOf_Bill()
-{
-    int choice;
-    cout << "[ Select Bill Category ]" << endl;
-    cout << "1. Electricity" << endl;
-    cout << "2. Water" << endl;
-    cout << "3. Gas" << endl;
-    cout << "4. Internet" << endl;
-    cout << "5. 1Bill Payments" << endl;
-    cin >> choice;
-    return choice;
-}
-
-void ServiceProviders(int Bills_category)
-{
-    cout << "\n[ Select Company ]" << endl;
-    switch (Bills_category)
+    if (arguments == 3)
     {
-        int serviceProvider;
-    case 1:
-    {
-        cout << "1. MEPCO\n 2. LESCO\n 3. K-ELECTRIC" << endl;
-        cin >> serviceProvider;
-        payBill();
-    }
+        int userID = stoi(arg[1]);
+        double toBePaid = stod(arg[2]);
+        ifstream readWalletFile;
+        vector<string> linesV;
+        string line;
+        readWalletFile.open("wallet.txt");
+        if (readWalletFile.is_open())
+        {
+            while (getline(readWalletFile, line))
+            {
+                linesV.push_back(line);
+            }
 
-    break;
-    case 2:
-    {
-        cout << "1. LWASA\n 2. BWASA\n 3. CDA" << endl;
-        cin >> serviceProvider;
-        payBill();
-    }
-    break;
-    case 3:
-    {
-        cout << "1. SSGC\n 2. SNGPL" << endl;
-        cin >> serviceProvider;
-        payBill();
-    }
-    break;
-    case 4:
-    {
-        cout << "1. OPTIX\n 2. SB-LINK\n 3. NAYATEL" << endl;
-        cin >> serviceProvider;
-        payBill();
-    }
-    break;
-    case 5:
-    {
-        cout << "1. 1Bill INVOICES\n 2. 1BILL TOP UP" << endl;
-        cin >> serviceProvider;
-        payBill();
-    }
-    break;
-    default:
-        cout << "Invalid category selected." << endl;
-    }
-}
+            for (string &x : linesV)
+            {
+                int uid;
+                char separator;
+                double totalPkrBalance, totalUsdBalance;
+                stringstream ss(x);
+                ss >> uid >> separator >> totalPkrBalance >> separator >> totalUsdBalance;
+                if (uid == userID)
+                {
+                    if (toBePaid < totalPkrBalance)
+                    {
+                        totalPkrBalance = totalPkrBalance - toBePaid;
+                        ostringstream oss;
+                        oss << uid << '|' << fixed << setprecision(1) << totalPkrBalance << '|' << setprecision(1) << totalUsdBalance;
+                        x = oss.str();
+                        break;
+                    }
+                    else
+                    {
+                        return -7; // insufficient balance
+                    }
+                }
+            }
+        }
+        readWalletFile.close();
 
-double billDetails()
-{
-    billStruct bill;
-    cout << "Enter Consumer/Reference ID: ";
-    cin >> bill.id;
-    cout << "Enter amount to be paid: ";
-    cin >> bill.billAmount;
-    return bill.billAmount;
-}
+        ofstream rewriteWalletFile;
+        rewriteWalletFile.open("wallet.txt", ios::trunc);
+        if (rewriteWalletFile.is_open())
+        {
+            for (string x : linesV)
+            {
+                rewriteWalletFile << x << endl;
+            }
+            rewriteWalletFile.close();
+        }
 
-bool validateFunds(double amount)
-{
-    return account_balance >= amount;
-}
-
-void updateBalance(double amount)
-{
-    account_balance -= amount;
-}
-
-void payBill()
-{
-    double amount = billDetails();
-    bool action = validateFunds(amount);
-    if (action)
-    {
-        updateBalance(amount);
-    }
-    TransactionResult(action);
-}
-
-void TransactionResult(bool success)
-{
-    if (success)
-    {
-        cout << "SUCCESS: You have successfully paid your bill." << endl;
-        cout << "Remaining Balance: " << fixed << setprecision(2) << account_balance << " PKR" << endl;
+        else
+        {
+            return -1; // file opening error
+        }
     }
     else
     {
-        cout << "\n------------------------------------------" << endl;
-        cout << "Insufficient account balance. Payment failed." << endl;
-        cout << "------------------------------------------" << endl;
+        return -6; // no of arguments is not correct
     }
+
+    return 0;
 }

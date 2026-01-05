@@ -636,6 +636,14 @@ class _HomepageState extends State<Homepage> {
                         userID.toString(),
                         billAmountController.text.trim(),
                       );
+                      await billPaymentHistory(
+                        userID.toString(),
+                        selectedBill!,
+                        selectedSP!,
+                        billConsumerName.text.trim(),
+                        billConsumerNo.text.trim(),
+                        billAmountController.text.trim(),
+                      );
                       await currentUser();
                       setState(() {
                         selectedSP = null;
@@ -2228,6 +2236,58 @@ class _HomepageState extends State<Homepage> {
         return;
       }
       debugPrint("Error in transfer history function cpp: $e");
+      Utils().flutterToast("Unexpected error while processing!", context);
+    }
+  }
+
+  Future<void> billPaymentHistory(
+    String uid,
+    String billType,
+    String serviceProvider,
+    String consumerName,
+    String consumerID,
+    String paidAmount,
+  ) async {
+    try {
+      final history = await Process.run("billPaymentHistory.exe", [
+        uid,
+        billType,
+        serviceProvider,
+        consumerName,
+        consumerID,
+        paidAmount,
+      ], workingDirectory: Directory.current.path);
+      int decide = history.exitCode;
+      switch (decide) {
+        case 0:
+          {
+            debugPrint("Added bill Payment history sucessfully!");
+          }
+          break;
+        case -1:
+          {
+            if (!mounted) {
+              return;
+            }
+            Utils().flutterToast("Internal error occured!", context);
+            debugPrint("file opening error in bill Payment history");
+          }
+          break;
+        case -6:
+          {
+            debugPrint("incorrect arguments in transfer history!");
+          }
+        default:
+          {
+            debugPrint("Error in bill Payment history function cpp");
+            Utils().flutterToast("Unexpected error!", context);
+          }
+      }
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      debugPrint("Error in bill Payment history function cpp: $e");
       Utils().flutterToast("Unexpected error while processing!", context);
     }
   }

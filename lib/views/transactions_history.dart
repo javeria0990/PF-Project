@@ -17,7 +17,8 @@ class _TransactionsHistoryState extends State<TransactionsHistory> {
   void initState() {
     super.initState();
     // displayAddBalanceHistory();
-    displayExchangeHistory();
+    // displayExchangeHistory();
+    // displayTransferHistory();
   }
 
   @override
@@ -70,6 +71,9 @@ class _TransactionsHistoryState extends State<TransactionsHistory> {
                       return transactionItem(
                         transactions[index]["action"],
                         transactions[index]["currency"],
+                        transactions[index]["method"],
+                        transactions[index]["accountNum"],
+                        transactions[index]["name"],
                         transactions[index]["amount"],
                         transactions[index]["time"],
                         transactions[index]["color"],
@@ -153,6 +157,80 @@ class _TransactionsHistoryState extends State<TransactionsHistory> {
       debugPrint("Error displaying exchange history: $e");
     }
   }
+
+  Future<void> displayTransferHistory() async {
+    try {
+      final result = await Process.run("displayTransferHistory.exe", [
+        widget.userID.trim(),
+      ], workingDirectory: Directory.current.path);
+
+      final output = result.stdout.toString().trim();
+      if (output.isEmpty) return;
+
+      final lines = output.split('\n');
+
+      final List<Map<String, dynamic>> temp = [];
+
+      for (final line in lines) {
+        final parts = line.split('|');
+
+        if (parts.length < 7) continue;
+
+        temp.add({
+          "action": "Transferred Money",
+          "currency": parts[1],
+          "method": parts[2],
+          "accountNum": parts[3],
+          "name": parts[4],
+          "amount": parts[5],
+          "time": parts[6],
+          "color": Colors.red,
+        });
+      }
+      setState(() {
+        transactions = temp;
+      });
+    } catch (e) {
+      debugPrint("Error displaying transfer money history: $e");
+    }
+  }
+
+  Future<void> displayBillHistory() async {
+    try {
+      final result = await Process.run("displayTransferHistory.exe", [
+        widget.userID.trim(),
+      ], workingDirectory: Directory.current.path);
+
+      final output = result.stdout.toString().trim();
+      if (output.isEmpty) return;
+
+      final lines = output.split('\n');
+
+      final List<Map<String, dynamic>> temp = [];
+
+      for (final line in lines) {
+        final parts = line.split('|');
+
+        if (parts.length < 7) continue;
+
+        temp.add({
+          "action": "Transferred Money",
+          "currency": parts[1],
+          "method": parts[2],
+          "accountNum": parts[3],
+          "name": parts[4],
+          "amount": parts[5],
+          "time": parts[6],
+          "color": Colors.red,
+        });
+      }
+      setState(() {
+        transactions = temp;
+      });
+    } catch (e) {
+      debugPrint("Error displaying transfer money history: $e");
+    }
+  }
 }
 
 // Widget transactionItem(
@@ -198,9 +276,51 @@ class _TransactionsHistoryState extends State<TransactionsHistory> {
 //   );
 // }
 
+// Widget transactionItem(
+//   String title,
+//   String currency,
+//   String amount,
+//   String date,
+//   Color color,
+// ) {
+//   return Card(
+//     elevation: 2,
+//     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+//     child: ListTile(
+//       leading: CircleAvatar(
+//         backgroundColor: color.withValues(alpha: 200),
+//         child: Icon(Icons.account_balance_wallet, color: color),
+//       ),
+//       title: Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
+//       subtitle: Row(
+//         children: [
+//           Text("Exchanged Currency: $currency"),
+//           SizedBox(width: 10),
+//           SizedBox(width: 10),
+//           SizedBox(width: 10),
+//           Text("Exchanged Amount: $amount"),
+//           SizedBox(width: 10),
+//           Text(date),
+//         ],
+//       ),
+//       trailing: Text(
+//         amount,
+//         style: TextStyle(
+//           color: color,
+//           fontWeight: FontWeight.bold,
+//           fontSize: 16,
+//         ),
+//       ),
+//     ),
+//   );
+// }
+
 Widget transactionItem(
   String title,
   String currency,
+  String method,
+  String accountNum,
+  String name,
   String amount,
   String date,
   Color color,
@@ -216,17 +336,20 @@ Widget transactionItem(
       title: Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Row(
         children: [
-          Text("Exchanged Currency: $currency"),
+          Text("Currency: $currency"),
+          SizedBox(width: 10),
+          Text("Transacton Method: $method"),
+          SizedBox(width: 10),
+          Text("Account Name: $name"),
+          SizedBox(width: 10),
+          Text("Account No/UID: $accountNum"),
           SizedBox(width: 10),
           SizedBox(width: 10),
-          SizedBox(width: 10),
-          Text("Exchanged Amount: $amount"),
-          SizedBox(width: 10),
-          Text(date),
+          Text("Time: $date"),
         ],
       ),
       trailing: Text(
-        amount,
+        "Amount: $amount",
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.bold,

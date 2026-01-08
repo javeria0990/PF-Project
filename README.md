@@ -115,16 +115,16 @@ Desktop screenshots of Paynix are stored in the repository under:
 
 <table>
   <tr>
-    <td><img src="appscreen_shot/Screenshot_01.png" width="400"/></td>
-    <td><img src="appscreen_shot/Screenshot_02.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_01.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_02.png" width="400"/></td>
   </tr>
   <tr>
-    <td><img src="appscreen_shot/Screenshot_03.png" width="400"/></td>
-    <td><img src="appscreen_shot/Screenshot_04.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_03.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_04.png" width="400"/></td>
   </tr>
   <tr>
-    <td><img src="appscreen_shot/Screenshot_05.png" width="400"/></td>
-    <td><img src="appscreen_shot/Screenshot_06.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_05.png" width="400"/></td>
+    <td><img src="appscreen_shots/Screenshot_06.png" width="400"/></td>
   </tr>
 </table>
 
